@@ -127,6 +127,8 @@ header {
 }
 .history-item.no-bid { border-left-color: var(--text-muted); color: var(--text-muted); }
 .history-item.payout { border-left-color: var(--success); }
+.hist-player { font-weight: 600; }
+.hist-meta { font-size: 0.78rem; color: var(--text-muted); }
 
 /* ── Cards / panels ──────────────────────────────────────────────────────── */
 .card {

@@ -195,11 +195,15 @@ class GameManager:
             given_die.revealed = True
             self.auctioner.take_die(given_die)
 
-            self.history.append(
-                f'Round {self.round_num}: {self.exchange_winner.name} paid {self.bid} '
-                f'to {self.auctioner.name}, '
-                f'traded a {self.auctioned_die.value} for a {given_die.value}'
-            )
+            self.history.append({
+                'type': 'exchange',
+                'round': self.round_num,
+                'winner': self.exchange_winner.name,
+                'auctioner': self.auctioner.name,
+                'bid': self.bid,
+                'winner_got': self.auctioned_die.value,
+                'auctioner_got': given_die.value,
+            })
 
             self.auctioned_die = None
             self.exchange_winner = None
@@ -320,11 +324,12 @@ class GameManager:
                 if remaining <= 0:
                     self._timer_active = False
                     if self.bid_leader is None:
-                        self.history.append(
-                            f'Round {self.round_num}: '
-                            f'{self.auctioner.name} auctioned '
-                            f'[{self.auctioned_die.value}] — no bids'
-                        )
+                        self.history.append({
+                            'type': 'no_bid',
+                            'round': self.round_num,
+                            'auctioner': self.auctioner.name,
+                            'die': self.auctioned_die.value,
+                        })
                         self.auctioner.take_die(self.auctioned_die)
                         self.auctioned_die = None
                         self._advance_auction()

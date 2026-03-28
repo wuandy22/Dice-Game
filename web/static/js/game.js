@@ -233,9 +233,8 @@ function renderAuctionLive(s) {
     const canBid = !isLeader;
     document.getElementById('quick-bid-btn').disabled = !canBid;
     document.getElementById('custom-bid-btn').disabled = !canBid;
-    if (isLeader) {
-      document.getElementById('bid-error-msg').textContent = 'You are the current leader.';
-    }
+    document.getElementById('bid-error-msg').textContent =
+      isLeader ? 'You are the current leader.' : '';
   }
 
   // Init countdown bar width if we just entered this phase
@@ -379,10 +378,25 @@ function renderHistory(s) {
   if ((s.history || []).length === renderedHistoryLen) return;
   renderedHistoryLen = (s.history || []).length;
   list.innerHTML = [...(s.history || [])].reverse().map(h => {
+    if (typeof h === 'object') {
+      if (h.type === 'exchange') {
+        const inner =
+          `<span class="hist-player">${esc(h.winner)}</span>: ${DICE_EMOJI[h.winner_got]}<br>` +
+          `<span class="hist-player">${esc(h.auctioner)}</span>: ${DICE_EMOJI[h.auctioner_got]}<br>` +
+          `<span class="hist-meta">${esc(h.winner)} paid ${h.bid} to ${esc(h.auctioner)}</span>`;
+        return `<div class="history-item">R${h.round} &nbsp;${inner}</div>`;
+      }
+      if (h.type === 'no_bid') {
+        return `<div class="history-item no-bid">R${h.round} &nbsp;${esc(h.auctioner)}: ${DICE_EMOJI[h.die]} — no bids</div>`;
+      }
+      if (h.type === 'payout') {
+        return `<div class="history-item payout">R${h.round} payout: ${esc(h.summary)}</div>`;
+      }
+    }
+    // plain-string fallback (payout lines)
     let cls = 'history-item';
-    if (h.includes('no bids')) cls += ' no-bid';
-    else if (h.includes('payout') || h.includes('Payout')) cls += ' payout';
-    return `<div class="${cls}">${esc(h)}</div>`;
+    if (String(h).includes('payout')) cls += ' payout';
+    return `<div class="${cls}">${esc(String(h))}</div>`;
   }).join('');
 }
 
