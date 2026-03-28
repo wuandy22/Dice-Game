@@ -384,10 +384,10 @@ function renderHistory(s) {
           `<span class="hist-player">${esc(h.winner)}</span>: ${DICE_EMOJI[h.winner_got]}<br>` +
           `<span class="hist-player">${esc(h.auctioner)}</span>: ${DICE_EMOJI[h.auctioner_got]}<br>` +
           `<span class="hist-meta">${esc(h.winner)} paid ${h.bid} to ${esc(h.auctioner)}</span>`;
-        return `<div class="history-item">R${h.round} &nbsp;${inner}</div>`;
+        return `<div class="history-item">R${h.round}·${h.auction} &nbsp;${inner}</div>`;
       }
       if (h.type === 'no_bid') {
-        return `<div class="history-item no-bid">R${h.round} &nbsp;${esc(h.auctioner)}: ${DICE_EMOJI[h.die]} — no bids</div>`;
+        return `<div class="history-item no-bid">R${h.round}·${h.auction} &nbsp;${esc(h.auctioner)}: ${DICE_EMOJI[h.die]} — no bids</div>`;
       }
       if (h.type === 'payout') {
         return `<div class="history-item payout">R${h.round} payout: ${esc(h.summary)}</div>`;

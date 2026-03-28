@@ -36,6 +36,7 @@ class GameManager:
 
         # rolling
         self.ready_set: set[str] = set()
+        self.round_auction_num = 0
 
         # auction
         self.auction_queue: list[Player] = []
@@ -195,9 +196,11 @@ class GameManager:
             given_die.revealed = True
             self.auctioner.take_die(given_die)
 
+            self.round_auction_num += 1
             self.history.append({
                 'type': 'exchange',
                 'round': self.round_num,
+                'auction': self.round_auction_num,
                 'winner': self.exchange_winner.name,
                 'auctioner': self.auctioner.name,
                 'bid': self.bid,
@@ -248,6 +251,7 @@ class GameManager:
             for d in p.dice:
                 d.roll()
         self.ready_set = set()
+        self.round_auction_num = 0
         self.payout_data = []
         self.phase = Phase.ROLLING
 
@@ -324,9 +328,11 @@ class GameManager:
                 if remaining <= 0:
                     self._timer_active = False
                     if self.bid_leader is None:
+                        self.round_auction_num += 1
                         self.history.append({
                             'type': 'no_bid',
                             'round': self.round_num,
+                            'auction': self.round_auction_num,
                             'auctioner': self.auctioner.name,
                             'die': self.auctioned_die.value,
                         })
