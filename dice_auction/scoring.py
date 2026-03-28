@@ -1,12 +1,14 @@
 from .models import Player, Pot
 
 
-def calculate_shares(players: list[Player]) -> dict[Player, float]:
+def calculate_shares(players: list[Player], four_dice_mode: bool = False) -> dict[Player, float]:
     """
     Returns fractional shares per player.
+    Standard mode:
     - Highest total: 1 share split among tied players.
     - Lowest total: 1 share split among tied players.
     - Each 3-of-a-kind: 1 full share each (no split).
+    4-dice mode: same highest/lowest rules, but 4-of-a-kind = 2 shares (trips don't count).
     """
     shares: dict[Player, float] = {p: 0.0 for p in players}
 
@@ -24,10 +26,16 @@ def calculate_shares(players: list[Player]) -> dict[Player, float]:
     for p in low_winners:
         shares[p] += 1.0 / len(low_winners)
 
-    # 3-of-a-kind
-    for p in players:
-        if p.has_three_of_a_kind():
-            shares[p] += 1.0
+    if four_dice_mode:
+        # 4-of-a-kind = 2 shares each
+        for p in players:
+            if p.has_four_of_a_kind():
+                shares[p] += 2.0
+    else:
+        # 3-of-a-kind = 1 share each
+        for p in players:
+            if p.has_three_of_a_kind():
+                shares[p] += 1.0
 
     return shares
 

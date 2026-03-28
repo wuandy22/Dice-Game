@@ -62,6 +62,11 @@ def on_start(data):
         emit('error_msg', {'message': error})
 
 
+@socketio.on('toggle_mode')
+def on_toggle_mode():
+    gm.toggle_four_dice_mode(request.sid)
+
+
 @socketio.on('mark_ready')
 def on_ready():
     gm.mark_ready(request.sid)

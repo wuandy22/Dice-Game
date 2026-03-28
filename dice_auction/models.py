@@ -50,6 +50,10 @@ class Player:
         vals = [d.value for d in self.dice]
         return len(set(vals)) == 1 and all(v is not None for v in vals)
 
+    def has_four_of_a_kind(self) -> bool:
+        vals = [d.value for d in self.dice]
+        return len(vals) == 4 and len(set(vals)) == 1 and all(v is not None for v in vals)
+
     def __repr__(self) -> str:
         return f"Player({self.name!r}, chips={self.chips})"
 

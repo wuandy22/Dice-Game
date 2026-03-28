@@ -25,7 +25,10 @@
 <header>
   <div class="header-title">🎲 Dice Auction</div>
   <div class="header-center" id="header-center">Lobby</div>
-  <div class="pot-badge">POT: <span id="pot-chips">0</span></div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="mode-badge" class="mode-badge hidden">4 Dice Mode</span>
+    <div class="pot-badge">POT: <span id="pot-chips">0</span></div>
+  </div>
 </header>
 
 <!-- ── Main layout ────────────────────────────────────────────────────────── -->
@@ -44,9 +47,11 @@
           <label>Rounds:
             <input type="number" id="rounds-input" value="5" min="1" max="50">
           </label>
+          <button id="mode-toggle-btn" class="btn btn-neutral">4 Dice Mode: OFF</button>
           <button id="start-btn" class="btn btn-primary" disabled>Start Game</button>
           <span style="font-size:.85rem;color:var(--text-muted)">(0 = unlimited)</span>
         </div>
+        <p id="mode-desc" style="margin-top:8px;font-size:.82rem;color:var(--text-muted)"></p>
       </div>
       <p class="lobby-hint" id="lobby-hint" style="margin-top:12px"></p>
     </div>

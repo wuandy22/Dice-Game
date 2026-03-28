@@ -105,6 +105,7 @@ function renderHeader(s) {
   document.getElementById('header-center').textContent =
     phaseLabel(s.phase) + (roundLabel ? `  ·  ${roundLabel}` : '');
   document.getElementById('pot-chips').textContent = s.pot;
+  document.getElementById('mode-badge').classList.toggle('hidden', !s.four_dice_mode);
 }
 
 function phaseLabel(phase) {
@@ -150,9 +151,8 @@ function renderLobby(s) {
     `<span class="player-chip${p.name === myName ? ' you' : ''}">${esc(p.name)}${p.name === myName ? ' (you)' : ''}</span>`
   ).join('');
 
-  const startArea = document.getElementById('start-area');
   const myRegistered = s.players.some(p => p.name === myName);
-  startArea.classList.toggle('hidden', !myRegistered);
+  document.getElementById('start-area').classList.toggle('hidden', !myRegistered);
 
   const hint = document.getElementById('lobby-hint');
   hint.textContent = s.players.length < 3
@@ -160,11 +160,22 @@ function renderLobby(s) {
     : `${s.players.length} players ready.`;
 
   document.getElementById('start-btn').disabled = s.players.length < 3;
+
+  const on = s.four_dice_mode;
+  document.getElementById('mode-toggle-btn').textContent = `4 Dice Mode: ${on ? 'ON' : 'OFF'}`;
+  document.getElementById('mode-toggle-btn').className = `btn ${on ? 'btn-warning' : 'btn-neutral'}`;
+  document.getElementById('mode-desc').textContent = on
+    ? '4 dice per player · Four-of-a-kind = 2 shares · Trips don\'t score'
+    : '';
 }
 
 document.getElementById('start-btn').addEventListener('click', () => {
   const rounds = parseInt(document.getElementById('rounds-input').value) || 0;
   socket.emit('start_game', { total_rounds: rounds });
+});
+
+document.getElementById('mode-toggle-btn').addEventListener('click', () => {
+  socket.emit('toggle_mode');
 });
 
 // ── Rolling ────────────────────────────────────────────────────────────────
@@ -318,9 +329,10 @@ function renderPayout(s) {
   tbody.innerHTML = (s.payout_data || []).map(r => {
     const diceStr = (r.dice || []).map(v => DICE_EMOJI[v] || v).join(' ');
     const badges = [
-      r.is_highest   ? '<span class="badge badge-high">Highest</span>' : '',
-      r.is_lowest    ? '<span class="badge badge-low">Lowest</span>'   : '',
-      r.three_of_a_kind ? '<span class="badge badge-trips">Trips</span>' : '',
+      r.is_highest      ? '<span class="badge badge-high">Highest</span>'    : '',
+      r.is_lowest       ? '<span class="badge badge-low">Lowest</span>'      : '',
+      r.three_of_a_kind ? '<span class="badge badge-trips">Trips</span>'     : '',
+      r.four_of_a_kind  ? '<span class="badge badge-quads">Quads ×2</span>'  : '',
     ].join('');
     const youMark = r.name === myName ? ' <span class="you-badge">you</span>' : '';
     return `<tr${r.chips_won > 0 ? ' class="winner-row"' : ''}>

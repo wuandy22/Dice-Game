@@ -35,6 +35,7 @@ class GameManager:
         self.history: list[str] = []
 
         # rolling
+        self.four_dice_mode: bool = False
         self.ready_set: set[str] = set()
         self.round_auction_num = 0
 
@@ -108,6 +109,15 @@ class GameManager:
             snap = self._snapshot()
         self._emit(snap)
         return True, ''
+
+    def toggle_four_dice_mode(self, sid: str) -> bool:
+        with self._lock:
+            if self.phase != Phase.LOBBY or sid not in self.sid_map:
+                return False
+            self.four_dice_mode = not self.four_dice_mode
+            snap = self._snapshot()
+        self._emit(snap)
+        return True
 
     def mark_ready(self, sid: str) -> bool:
         snap = None
@@ -246,8 +256,9 @@ class GameManager:
             ante = min(5, p.chips)
             p.pay(ante)
             self.pot.collect(ante)
+        dice_count = 4 if self.four_dice_mode else 3
         for p in self.players:
-            p.dice = [Die() for _ in range(3)]
+            p.dice = [Die() for _ in range(dice_count)]
             for d in p.dice:
                 d.roll()
         self.ready_set = set()
@@ -281,7 +292,7 @@ class GameManager:
             for d in p.dice:
                 d.revealed = True
 
-        shares = calculate_shares(self.players)
+        shares = calculate_shares(self.players, four_dice_mode=self.four_dice_mode)
         totals = {p: p.hand_total() for p in self.players}
         max_total = max(totals.values()) if totals else 0
         min_total = min(totals.values()) if totals else 0
@@ -298,7 +309,8 @@ class GameManager:
                 'chips_now': p.chips,
                 'is_highest': totals[p] == max_total,
                 'is_lowest': totals[p] == min_total,
-                'three_of_a_kind': p.has_three_of_a_kind(),
+                'three_of_a_kind': p.has_three_of_a_kind() if not self.four_dice_mode else False,
+                'four_of_a_kind': p.has_four_of_a_kind() if self.four_dice_mode else False,
             }
             for p in self.players
         ]
@@ -374,6 +386,7 @@ class GameManager:
         }
         pub = {
             'phase': self.phase,
+            'four_dice_mode': self.four_dice_mode,
             'round_num': self.round_num,
             'total_rounds': self.total_rounds,
             'pot': self.pot.chips,
