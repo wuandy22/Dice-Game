@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dice Auction</title>
+  <link rel="stylesheet" href="/static/css/game.css">
+</head>
+<body>
+
+<!-- ── Join modal ─────────────────────────────────────────────────────────── -->
+<div id="join-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <h2>🎲 Dice Auction</h2>
+    <p>Enter your name to join the game</p>
+    <form id="join-form">
+      <input type="text" id="name-input" placeholder="Your name" maxlength="20" autocomplete="off" autofocus>
+      <div class="modal-error" id="join-error"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%">Join Game</button>
+    </form>
+  </div>
+</div>
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="header-title">🎲 Dice Auction</div>
+  <div class="header-center" id="header-center">Lobby</div>
+  <div class="pot-badge">POT: <span id="pot-chips">0</span></div>
+</header>
+
+<!-- ── Main layout ────────────────────────────────────────────────────────── -->
+<div class="layout">
+
+  <!-- Left: game area -->
+  <main class="main-area">
+
+    <!-- ── LOBBY ────────────────────────────────────────────────────────── -->
+    <div id="p-lobby" class="card">
+      <h2>Waiting for players</h2>
+      <p class="subtitle">3–5 players needed. Join from any device on the same network.</p>
+      <div class="lobby-players" id="lobby-player-list"></div>
+      <div id="start-area" class="hidden">
+        <div class="lobby-form">
+          <label>Rounds:
+            <input type="number" id="rounds-input" value="5" min="1" max="50">
+          </label>
+          <button id="start-btn" class="btn btn-primary" disabled>Start Game</button>
+          <span style="font-size:.85rem;color:var(--text-muted)">(0 = unlimited)</span>
+        </div>
+      </div>
+      <p class="lobby-hint" id="lobby-hint" style="margin-top:12px"></p>
+    </div>
+
+    <!-- ── ROLLING ──────────────────────────────────────────────────────── -->
+    <div id="p-rolling" class="card hidden">
+      <h2>Your dice are ready</h2>
+      <p class="subtitle">Check the <strong>Your Dice</strong> tab below — no one else can see them.</p>
+      <div id="rolling-my-dice" style="margin-bottom:16px"></div>
+      <button id="ready-btn" class="btn btn-success">I've seen my dice — Ready</button>
+      <p style="margin-top:12px;font-size:.85rem;color:var(--text-muted)" id="rolling-waiting"></p>
+    </div>
+
+    <!-- ── AUCTION CHOOSE ───────────────────────────────────────────────── -->
+    <div id="p-auction-choose" class="card hidden">
+      <div id="choose-own">
+        <h2>Choose a die to auction</h2>
+        <p class="subtitle">Pick one — its value will be revealed to everyone.</p>
+        <div id="choose-dice-row"></div>
+      </div>
+      <div id="choose-waiting" class="hidden">
+        <h2>Auction in progress</h2>
+        <div class="waiting-banner">
+          <div class="spinner"></div>
+          Waiting for <strong id="choose-waiting-name" style="margin-left:4px"></strong>&nbsp;to choose a die…
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AUCTION LIVE ─────────────────────────────────────────────────── -->
+    <div id="p-auction-live" class="card hidden">
+      <div class="auction-header">
+        <div>
+          <h2>Live Auction</h2>
+          <div class="auction-meta"><span id="auction-auctioner">…</span> is selling</div>
+        </div>
+        <div class="auction-die-display">
+          <div class="die revealed" id="auction-die">?</div>
+        </div>
+      </div>
+
+      <div class="bid-status" id="bid-status">No bids yet.</div>
+
+      <div class="countdown-track">
+        <div class="countdown-fill" id="countdown-fill" style="width:100%"></div>
+      </div>
+      <div class="countdown-text" id="countdown-text">10.0s</div>
+
+      <!-- Bid controls (hidden for the seller) -->
+      <div id="bid-controls">
+        <div class="bid-controls">
+          <button id="quick-bid-btn" class="btn btn-primary">
+            Bid <span id="quick-bid-label">1</span>
+          </button>
+          <div class="custom-bid-row">
+            <input type="number" id="custom-bid-input" min="1" placeholder="Custom amount">
+            <button id="custom-bid-btn" class="btn btn-warning">Place bid</button>
+          </div>
+        </div>
+        <div class="bid-error-msg" id="bid-error-msg"></div>
+      </div>
+
+      <!-- Shown only to seller -->
+      <div id="you-are-selling" class="you-are-selling hidden">
+        You are auctioning this die — sit back while others bid.
+      </div>
+    </div>
+
+    <!-- ── EXCHANGE ─────────────────────────────────────────────────────── -->
+    <div id="p-exchange" class="card hidden">
+      <div id="exchange-winner-view" class="hidden">
+        <h2>You won the auction!</h2>
+        <p class="subtitle">You received: <span class="die revealed" id="received-die" style="display:inline-flex;width:44px;height:44px;font-size:24px;vertical-align:middle">?</span></p>
+        <p style="margin-bottom:14px;font-size:.9rem">Pick one of your dice to give back:</p>
+        <div id="exchange-dice-row"></div>
+      </div>
+      <div id="exchange-waiting-view">
+        <h2>Exchange in progress</h2>
+        <div class="waiting-banner">
+          <div class="spinner"></div>
+          <span><strong id="exchange-winner-name">…</strong> won with <strong id="exchange-bid-amount">…</strong> chips — choosing a die to give back…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAYOUT ────────────────────────────────────────────────────────── -->
+    <div id="p-payout" class="card hidden">
+      <h2>Round Results</h2>
+      <p class="subtitle" style="margin-bottom:16px">Pot distributed by shares earned.</p>
+      <table class="payout-table">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Dice</th>
+            <th>Shares</th>
+            <th>Won</th>
+            <th>Total chips</th>
+          </tr>
+        </thead>
+        <tbody id="payout-tbody"></tbody>
+      </table>
+      <div style="margin-top:18px">
+        <button id="next-round-btn" class="btn btn-primary">Next Round →</button>
+      </div>
+    </div>
+
+    <!-- ── GAME OVER ─────────────────────────────────────────────────────── -->
+    <div id="p-game-over" class="card hidden">
+      <h2>Game Over</h2>
+      <p class="subtitle" style="margin-bottom:16px">Final standings</p>
+      <div class="standings" id="standings"></div>
+    </div>
+
+    <!-- ── Tabs (always visible after game starts) ───────────────────────── -->
+    <div class="card" style="padding:14px 20px">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="my-dice">Your Dice</button>
+        <button class="tab-btn" data-tab="chips">All Chips</button>
+      </div>
+
+      <div id="tab-my-dice" class="tab-panel active">
+        <div id="my-dice-row"></div>
+      </div>
+
+      <div id="tab-chips" class="tab-panel">
+        <table class="chips-table">
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Chips</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="chips-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── History sidebar ─────────────────────────────────────────────────── -->
+  <aside class="history-sidebar">
+    <h3>Auction History</h3>
+    <div class="history-list" id="history-list">
+      <div style="color:var(--text-muted);font-size:.85rem">No auctions yet.</div>
+    </div>
+  </aside>
+
+</div><!-- .layout -->
+
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script src="/static/js/game.js"></script>
+</body>
+</html>
