@@ -50,6 +50,7 @@ socket.on('private_dice', (data) => {
     myDice = data.dice;
     renderMyDiceTab();
     renderRollingDice();
+    renderChooseDice();
     renderExchangeDice();
   }
 });
@@ -418,7 +419,7 @@ function diceRowHtml(dice, clickable, onClick) {
   if (clickable && onClick) window._dieClickHandler = onClick;
   return `<div class="dice-row">${dice.map((d, i) => {
     const face    = d.value ? DICE_EMOJI[d.value] : '?';
-    const cls     = ['die', d.revealed ? 'revealed' : '', clickable ? 'clickable' : ''].filter(Boolean).join(' ');
+    const cls     = ['die', clickable ? 'clickable' : ''].filter(Boolean).join(' ');
     const handler = clickable && onClick ? `onclick="handleDieClick(${i})"` : '';
     const label   = clickable ? `<div class="die-label">Die ${i + 1}</div>` : '';
     return `<div style="text-align:center"><div class="${cls}" ${handler}>${face}</div>${label}</div>`;
