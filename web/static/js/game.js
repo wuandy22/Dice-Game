@@ -102,8 +102,10 @@ function renderHeader(s) {
   const roundLabel = s.total_rounds > 0
     ? `Round ${s.round_num} of ${s.total_rounds}`
     : (s.round_num > 0 ? `Round ${s.round_num}` : '');
+  const subRoundLabel = s.four_dice_mode && ['auction_choose','auction_live','exchange'].includes(s.phase)
+    ? `  ·  Auction ${s.auction_sub_round}/2` : '';
   document.getElementById('header-center').textContent =
-    phaseLabel(s.phase) + (roundLabel ? `  ·  ${roundLabel}` : '');
+    phaseLabel(s.phase) + (roundLabel ? `  ·  ${roundLabel}` : '') + subRoundLabel;
   document.getElementById('pot-chips').textContent = s.pot;
   document.getElementById('mode-badge').classList.toggle('hidden', !s.four_dice_mode);
 }

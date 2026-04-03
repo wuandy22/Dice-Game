@@ -268,10 +268,12 @@ class GameManager:
 
     def _begin_auction_phase(self):
         n = len(self.players)
-        self.auction_queue = [
-            self.players[(self.first_idx + i) % n]
-            for i in range(n)
-        ]
+        forward = [self.players[(self.first_idx + i) % n] for i in range(n)]
+        if self.four_dice_mode:
+            # Snake: forward then reverse — last player auctions twice in a row
+            self.auction_queue = forward + list(reversed(forward))
+        else:
+            self.auction_queue = forward
         self._next_auctioner()
 
     def _next_auctioner(self):
@@ -412,6 +414,8 @@ class GameManager:
             'exchange_winner': self.exchange_winner.name if self.exchange_winner else None,
             'countdown': AUCTION_COUNTDOWN,
             'payout_data': self.payout_data,
+            'auction_sub_round': (1 if self.round_auction_num < len(self.players) else 2)
+                                  if self.four_dice_mode else 1,
         }
         return {'pub': pub, 'priv': priv, 'sids': dict(self.sid_map)}
 
