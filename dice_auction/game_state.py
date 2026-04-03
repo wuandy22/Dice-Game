@@ -4,7 +4,7 @@ from typing import Optional
 from .models import Player, Die, Pot
 from .scoring import calculate_shares, distribute_pot
 
-AUCTION_COUNTDOWN = 10.0
+AUCTION_COUNTDOWN = 6.0
 
 
 class Phase:
