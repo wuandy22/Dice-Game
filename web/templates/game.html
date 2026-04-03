@@ -43,6 +43,8 @@
       <h2>Waiting for players</h2>
       <p class="subtitle">3–5 players needed. Join from any device on the same network.</p>
       <div class="lobby-players" id="lobby-player-list"></div>
+
+      <!-- Game settings — only for registered players -->
       <div id="start-area" class="hidden">
         <div class="lobby-form">
           <label>Rounds:
@@ -50,11 +52,17 @@
           </label>
           <button id="mode-toggle-btn" class="btn btn-neutral">4 Dice Mode: OFF</button>
           <button id="start-btn" class="btn btn-primary" disabled>Start Game</button>
-          <button id="leave-lobby-btn" class="btn btn-neutral">Leave Lobby</button>
           <span style="font-size:.85rem;color:var(--text-muted)">(0 = unlimited)</span>
         </div>
         <p id="mode-desc" style="margin-top:8px;font-size:.82rem;color:var(--text-muted)"></p>
       </div>
+
+      <!-- Join / Leave — always visible, toggled by registration state -->
+      <div style="margin-top:14px;display:flex;gap:10px">
+        <button id="join-lobby-btn" class="btn btn-primary hidden">Join Lobby</button>
+        <button id="leave-lobby-btn" class="btn btn-neutral hidden">Leave Lobby</button>
+      </div>
+
       <p class="lobby-hint" id="lobby-hint" style="margin-top:12px"></p>
     </div>
 
