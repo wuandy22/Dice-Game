@@ -27,10 +27,10 @@ def calculate_shares(players: list[Player], four_dice_mode: bool = False) -> dic
         shares[p] += 1.0 / len(low_winners)
 
     if four_dice_mode:
-        # 4-of-a-kind = 2 shares each
+        # 4-of-a-kind = 4 shares each
         for p in players:
             if p.has_four_of_a_kind():
-                shares[p] += 2.0
+                shares[p] += 4.0
     else:
         # 3-of-a-kind = 1 share each
         for p in players:

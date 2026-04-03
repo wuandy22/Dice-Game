@@ -167,7 +167,7 @@ function renderLobby(s) {
   document.getElementById('mode-toggle-btn').textContent = `4 Dice Mode: ${on ? 'ON' : 'OFF'}`;
   document.getElementById('mode-toggle-btn').className = `btn ${on ? 'btn-warning' : 'btn-neutral'}`;
   document.getElementById('mode-desc').textContent = on
-    ? '4 dice per player · Four-of-a-kind = 2 shares · Trips don\'t score'
+    ? '4 dice per player · Four-of-a-kind = 4 shares · Trips don\'t score'
     : '';
 }
 

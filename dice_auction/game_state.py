@@ -253,7 +253,7 @@ class GameManager:
         self.round_num += 1
         self.pot = Pot()
         for p in self.players:
-            ante = min(5, p.chips)
+            ante = min(10, p.chips)
             p.pay(ante)
             self.pot.collect(ante)
         dice_count = 4 if self.four_dice_mode else 3
