@@ -156,8 +156,6 @@ function renderLobby(s) {
 
   const myRegistered = s.players.some(p => p.name === myName);
   document.getElementById('start-area').classList.toggle('hidden', !myRegistered);
-  document.getElementById('leave-lobby-btn').classList.toggle('hidden', !myRegistered);
-  document.getElementById('join-lobby-btn').classList.toggle('hidden', myRegistered);
 
   const hint = document.getElementById('lobby-hint');
   hint.textContent = s.players.length < 3
@@ -196,10 +194,6 @@ document.getElementById('exit-game-btn').addEventListener('click', () => {
 socket.on('left_lobby', () => {
   myName = null;
   localStorage.removeItem('diceAuctionName');
-  renderAll(publicState);
-});
-
-document.getElementById('join-lobby-btn').addEventListener('click', () => {
   showJoinModal();
 });
 
