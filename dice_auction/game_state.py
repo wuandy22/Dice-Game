@@ -94,6 +94,54 @@ class GameManager:
             snap = self._snapshot()
         self._emit(snap)
 
+    def leave_lobby(self, sid: str) -> bool:
+        """Remove the calling player from the lobby."""
+        with self._lock:
+            if self.phase != Phase.LOBBY:
+                return False
+            name = self.sid_map.get(sid)
+            if not name:
+                return False
+            self.players = [p for p in self.players if p.name != name]
+            del self.sid_map[sid]
+            snap = self._snapshot()
+        self._emit(snap)
+        self.sio.emit('left_lobby', {}, to=sid)
+        return True
+
+    def reset_to_lobby(self, sid: str) -> bool:
+        """End the current game and return everyone to the lobby with reset chips."""
+        with self._lock:
+            if sid not in self.sid_map:
+                return False
+            # Stop any running auction timer
+            self._timer_active = False
+            # Reset all players back to 100 chips, clear dice
+            for p in self.players:
+                p.chips = 100
+                p.dice = []
+            # Reset all game state, keep players and connections
+            self.pot = Pot()
+            self.phase = Phase.LOBBY
+            self.round_num = 0
+            self.total_rounds = 0
+            self.first_idx = 0
+            self.four_dice_mode = False
+            self.history = []
+            self.ready_set = set()
+            self.round_auction_num = 0
+            self.auction_queue = []
+            self.auctioner = None
+            self.auctioned_die = None
+            self.bid = 0
+            self.bid_leader = None
+            self.auction_deadline = 0.0
+            self.exchange_winner = None
+            self.payout_data = []
+            snap = self._snapshot()
+        self._emit(snap)
+        return True
+
     # ── Game flow ─────────────────────────────────────────────────────────────
 
     def start_game(self, sid: str, total_rounds: int) -> tuple[bool, str]:

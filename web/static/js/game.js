@@ -108,6 +108,7 @@ function renderHeader(s) {
     phaseLabel(s.phase) + (roundLabel ? `  ·  ${roundLabel}` : '') + subRoundLabel;
   document.getElementById('pot-chips').textContent = s.pot;
   document.getElementById('mode-badge').classList.toggle('hidden', !s.four_dice_mode);
+  document.getElementById('exit-game-btn').classList.toggle('hidden', s.phase === 'lobby');
 }
 
 function phaseLabel(phase) {
@@ -178,6 +179,22 @@ document.getElementById('start-btn').addEventListener('click', () => {
 
 document.getElementById('mode-toggle-btn').addEventListener('click', () => {
   socket.emit('toggle_mode');
+});
+
+document.getElementById('leave-lobby-btn').addEventListener('click', () => {
+  socket.emit('leave_lobby');
+});
+
+document.getElementById('exit-game-btn').addEventListener('click', () => {
+  if (confirm('End the current game and return everyone to the lobby?')) {
+    socket.emit('exit_game');
+  }
+});
+
+socket.on('left_lobby', () => {
+  myName = null;
+  localStorage.removeItem('diceAuctionName');
+  showJoinModal();
 });
 
 // ── Rolling ────────────────────────────────────────────────────────────────

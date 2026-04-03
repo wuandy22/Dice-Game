@@ -99,3 +99,13 @@ def on_exchange(data):
 @socketio.on('next_round')
 def on_next_round():
     gm.next_round(request.sid)
+
+
+@socketio.on('leave_lobby')
+def on_leave_lobby():
+    gm.leave_lobby(request.sid)
+
+
+@socketio.on('exit_game')
+def on_exit_game():
+    gm.reset_to_lobby(request.sid)

@@ -26,6 +26,7 @@
   <div class="header-title">🎲 Dice Auction</div>
   <div class="header-center" id="header-center">Lobby</div>
   <div style="display:flex;align-items:center;gap:10px">
+    <button id="exit-game-btn" class="btn btn-neutral hidden" style="font-size:.8rem;padding:5px 12px">Exit Game</button>
     <span id="mode-badge" class="mode-badge hidden">4 Dice Mode</span>
     <div class="pot-badge">POT: <span id="pot-chips">0</span></div>
   </div>
@@ -49,6 +50,7 @@
           </label>
           <button id="mode-toggle-btn" class="btn btn-neutral">4 Dice Mode: OFF</button>
           <button id="start-btn" class="btn btn-primary" disabled>Start Game</button>
+          <button id="leave-lobby-btn" class="btn btn-neutral">Leave Lobby</button>
           <span style="font-size:.85rem;color:var(--text-muted)">(0 = unlimited)</span>
         </div>
         <p id="mode-desc" style="margin-top:8px;font-size:.82rem;color:var(--text-muted)"></p>
