@@ -8,6 +8,31 @@
 </head>
 <body>
 
+<!-- ── Rules modal ────────────────────────────────────────────────────────── -->
+<div id="rules-modal" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal-card" style="width:440px;text-align:left">
+    <h2 style="text-align:center;margin-bottom:16px">🎲 How to Play</h2>
+
+    <p style="margin-bottom:10px;color:var(--text)">Each round, players are dealt hidden dice and take turns <strong>auctioning one die</strong> to the group. The winning bidder swaps their auctioned die for one from the seller's hand — chips go to the seller.</p>
+
+    <h3 style="margin:14px 0 6px;font-size:.95rem">Scoring (end of each round)</h3>
+    <ul style="padding-left:18px;line-height:1.8;color:var(--text)">
+      <li><strong>Highest total</strong> across all dice → 1 share</li>
+      <li><strong>Lowest total</strong> across all dice → 1 share</li>
+      <li><strong>Three-of-a-kind</strong> → 1 share</li>
+    </ul>
+    <p style="margin-top:8px;color:var(--text-muted);font-size:.85rem">Shares are split equally among ties. The pot is divided proportionally by shares earned.</p>
+
+    <h3 style="margin:14px 0 6px;font-size:.95rem">4 Dice Mode</h3>
+    <ul style="padding-left:18px;line-height:1.8;color:var(--text)">
+      <li>4 dice per player, two auction rounds per player (snake order)</li>
+      <li><strong>Four-of-a-kind</strong> → 4 shares (trips don't score)</li>
+    </ul>
+
+    <button class="btn btn-primary" style="width:100%;margin-top:20px" onclick="document.getElementById('rules-modal').classList.add('hidden')">Got it</button>
+  </div>
+</div>
+
 <!-- ── Join modal ─────────────────────────────────────────────────────────── -->
 <div id="join-modal" class="modal-overlay hidden">
   <div class="modal-card">
@@ -26,6 +51,7 @@
   <div class="header-title">🎲 Dice Auction</div>
   <div class="header-center" id="header-center">Lobby</div>
   <div style="display:flex;align-items:center;gap:10px">
+    <button id="rules-btn" class="btn btn-neutral" style="font-size:.8rem;padding:5px 12px" onclick="document.getElementById('rules-modal').classList.remove('hidden')">Rules</button>
     <button id="exit-game-btn" class="btn btn-neutral hidden" style="font-size:.8rem;padding:5px 12px">Exit Game</button>
     <span id="mode-badge" class="mode-badge hidden">4 Dice Mode</span>
     <div class="pot-badge">POT: <span id="pot-chips">0</span></div>
