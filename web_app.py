@@ -72,10 +72,12 @@ def on_ready():
     gm.mark_ready(request.sid)
 
 
-@socketio.on('choose_auction_die')
-def on_choose_die(data):
-    idx = int((data or {}).get('index', -1))
-    success, error = gm.choose_auction_die(request.sid, idx)
+@socketio.on('confirm_auction_dice')
+def on_confirm_auction_dice(data):
+    indices = (data or {}).get('indices', [])
+    if not isinstance(indices, list):
+        indices = []
+    success, error = gm.confirm_auction_dice(request.sid, indices)
     if not success:
         emit('error_msg', {'message': error})
 

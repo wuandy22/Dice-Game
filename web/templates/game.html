@@ -97,8 +97,11 @@
     <div id="p-auction-choose" class="card hidden">
       <div id="choose-own">
         <h2>Choose a die to auction</h2>
-        <p class="subtitle">Pick one — its value will be revealed to everyone.</p>
+        <p class="subtitle" id="choose-subtitle">Pick one — or select a matching pair to auction both (4 Dice Mode).</p>
         <div id="choose-dice-row"></div>
+        <div style="margin-top:14px">
+          <button id="auction-confirm-btn" class="btn btn-primary hidden" onclick="confirmAuction()">Auction Die</button>
+        </div>
       </div>
       <div id="choose-waiting" class="hidden">
         <h2>Auction in progress</h2>
@@ -152,8 +155,8 @@
     <div id="p-exchange" class="card hidden">
       <div id="exchange-winner-view" class="hidden">
         <h2>You won the auction!</h2>
-        <p class="subtitle">You received: <span class="die revealed" id="received-die" style="display:inline-flex;width:44px;height:44px;font-size:24px;vertical-align:middle">?</span></p>
-        <p style="margin-bottom:14px;font-size:.9rem">Pick one of your dice to give back:</p>
+        <p class="subtitle">You received: <span id="received-dice-display"></span></p>
+        <p style="margin-bottom:14px;font-size:.9rem" id="exchange-pick-msg">Pick one of your dice to give back:</p>
         <div id="exchange-dice-row"></div>
       </div>
       <div id="exchange-waiting-view">

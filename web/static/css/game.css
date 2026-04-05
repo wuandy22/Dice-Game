@@ -214,6 +214,16 @@ header {
   box-shadow: 0 6px 16px rgba(0,0,0,0.2);
 }
 .die.clickable:active { transform: translateY(0); }
+.die.selected {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--primary-dark), 0 4px 12px rgba(59,130,246,0.4);
+  transform: translateY(-4px);
+}
+.die.dulled {
+  opacity: 0.3;
+  filter: grayscale(0.6);
+}
 .die-label {
   font-size: 0.72rem;
   color: var(--text-muted);

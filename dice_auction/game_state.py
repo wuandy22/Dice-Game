@@ -42,7 +42,7 @@ class GameManager:
         # auction
         self.auction_queue: list[Player] = []
         self.auctioner:      Optional[Player] = None
-        self.auctioned_die:  Optional[Die]    = None
+        self.auctioned_dice: list            = []   # list of Die (1 or 2)
         self.bid             = 0
         self.bid_leader:     Optional[Player] = None
         self.auction_deadline = 0.0
@@ -50,6 +50,7 @@ class GameManager:
 
         # exchange
         self.exchange_winner: Optional[Player] = None
+        self.exchange_picks:  list             = []  # Die objects given back so far
 
         # payout
         self.payout_data: list[dict] = []
@@ -132,7 +133,8 @@ class GameManager:
             self.round_auction_num = 0
             self.auction_queue = []
             self.auctioner = None
-            self.auctioned_die = None
+            self.auctioned_dice = []
+            self.exchange_picks = []
             self.bid = 0
             self.bid_leader = None
             self.auction_deadline = 0.0
@@ -182,7 +184,7 @@ class GameManager:
         self._emit(snap)
         return True
 
-    def choose_auction_die(self, sid: str, die_index: int) -> tuple[bool, str]:
+    def confirm_auction_dice(self, sid: str, indices: list) -> tuple[bool, str]:
         snap = None
         with self._lock:
             if self.phase != Phase.AUCTION_CHOOSE:
@@ -190,9 +192,22 @@ class GameManager:
             player = self._player_for(sid)
             if player is None or player is not self.auctioner:
                 return False, 'Not your turn to auction'
-            if not (0 <= die_index < len(player.dice)):
-                return False, 'Invalid die index'
-            self.auctioned_die = player.give_die(die_index)
+            if len(indices) not in (1, 2):
+                return False, 'Must select 1 or 2 dice'
+            if len(set(indices)) != len(indices):
+                return False, 'Cannot select the same die twice'
+            for i in indices:
+                if not (0 <= i < len(player.dice)):
+                    return False, 'Invalid die index'
+            if len(indices) == 2:
+                if not self.four_dice_mode:
+                    return False, 'Pair auctions only available in 4 Dice Mode'
+                if player.dice[indices[0]].value != player.dice[indices[1]].value:
+                    return False, 'Selected dice must be a matching pair'
+            # Remove in descending order so earlier indices stay valid
+            for i in sorted(indices, reverse=True):
+                self.auctioned_dice.append(player.give_die(i))
+            self.auctioned_dice.reverse()  # restore selection order
             self.phase = Phase.AUCTION_LIVE
             self.auction_deadline = time.time() + AUCTION_COUNTDOWN
             self._timer_active = True
@@ -242,34 +257,39 @@ class GameManager:
             if not (0 <= die_index < len(player.dice)):
                 return False, 'Invalid die index'
 
-            given_die = player.give_die(die_index)
+            picked = player.give_die(die_index)
+            self.exchange_picks.append(picked)
 
-            # Execute the exchange
-            self.exchange_winner.pay(self.bid)
-            self.auctioner.receive(self.bid)
-            self.exchange_winner.take_die(self.auctioned_die)
-
-            # Both dice become public
-            self.auctioned_die.revealed = True
-            given_die.revealed = True
-            self.auctioner.take_die(given_die)
-
-            self.round_auction_num += 1
-            self.history.append({
-                'type': 'exchange',
-                'round': self.round_num,
-                'auction': self.round_auction_num,
-                'winner': self.exchange_winner.name,
-                'auctioner': self.auctioner.name,
-                'bid': self.bid,
-                'winner_got': self.auctioned_die.value,
-                'auctioner_got': given_die.value,
-            })
-
-            self.auctioned_die = None
-            self.exchange_winner = None
-            self._advance_auction()
-            snap = self._snapshot()
+            if len(self.exchange_picks) < len(self.auctioned_dice):
+                # Pair auction — need one more pick; emit partial state
+                snap = self._snapshot()
+            else:
+                # All picks collected — complete the exchange
+                self.exchange_winner.pay(self.bid)
+                self.auctioner.receive(self.bid)
+                for d in self.auctioned_dice:
+                    d.revealed = True
+                    self.exchange_winner.take_die(d)
+                for d in self.exchange_picks:
+                    d.revealed = True
+                    self.auctioner.take_die(d)
+                self.round_auction_num += 1
+                self.history.append({
+                    'type': 'exchange',
+                    'round': self.round_num,
+                    'auction': self.round_auction_num,
+                    'winner': self.exchange_winner.name,
+                    'auctioner': self.auctioner.name,
+                    'bid': self.bid,
+                    'winner_got': [d.value for d in self.auctioned_dice],
+                    'auctioner_got': [d.value for d in self.exchange_picks],
+                    'is_pair': len(self.auctioned_dice) == 2,
+                })
+                self.auctioned_dice = []
+                self.exchange_picks = []
+                self.exchange_winner = None
+                self._advance_auction()
+                snap = self._snapshot()
         self._emit(snap)
         return True, ''
 
@@ -329,7 +349,8 @@ class GameManager:
             self._do_payout()
             return
         self.auctioner = self.auction_queue.pop(0)
-        self.auctioned_die = None
+        self.auctioned_dice = []
+        self.exchange_picks = []
         self.bid = 0
         self.bid_leader = None
         self.phase = Phase.AUCTION_CHOOSE
@@ -396,10 +417,12 @@ class GameManager:
                             'round': self.round_num,
                             'auction': self.round_auction_num,
                             'auctioner': self.auctioner.name,
-                            'die': self.auctioned_die.value,
+                            'dice': [d.value for d in self.auctioned_dice],
+                            'is_pair': len(self.auctioned_dice) == 2,
                         })
-                        self.auctioner.take_die(self.auctioned_die)
-                        self.auctioned_die = None
+                        for d in self.auctioned_dice:
+                            self.auctioner.take_die(d)
+                        self.auctioned_dice = []
                         self._advance_auction()
                     else:
                         self.exchange_winner = self.bid_leader
@@ -456,10 +479,14 @@ class GameManager:
             'history': self.history[-40:],
             'ready_players': list(self.ready_set),
             'auctioner': self.auctioner.name if self.auctioner else None,
-            'auctioned_die': self.auctioned_die.value if self.auctioned_die else None,
+            'auctioned_die': self.auctioned_dice[0].value if self.auctioned_dice else None,
+            'auctioned_dice': [d.value for d in self.auctioned_dice],
+            'is_pair_auction': len(self.auctioned_dice) == 2,
             'current_bid': self.bid,
             'bid_leader': self.bid_leader.name if self.bid_leader else None,
             'exchange_winner': self.exchange_winner.name if self.exchange_winner else None,
+            'exchange_picks_needed': len(self.auctioned_dice),
+            'exchange_picks_so_far': len(self.exchange_picks),
             'countdown': AUCTION_COUNTDOWN,
             'payout_data': self.payout_data,
             'auction_sub_round': (1 if self.round_auction_num < len(self.players) else 2)
