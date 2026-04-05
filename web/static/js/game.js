@@ -417,8 +417,7 @@ function renderHistory(s) {
         return `<div class="history-item">R${h.round}·${h.auction} &nbsp;${inner}</div>`;
       }
       if (h.type === 'no_bid') {
-        const penalty = h.penalty ? ` · −${h.penalty} chips` : '';
-        return `<div class="history-item no-bid">R${h.round}·${h.auction} &nbsp;${esc(h.auctioner)}: ${DICE_EMOJI[h.die]} — no bids${penalty}</div>`;
+        return `<div class="history-item no-bid">R${h.round}·${h.auction} &nbsp;${esc(h.auctioner)}: ${DICE_EMOJI[h.die]} — no bids</div>`;
       }
       if (h.type === 'payout') {
         return `<div class="history-item payout">R${h.round} payout: ${esc(h.summary)}</div>`;
