@@ -87,7 +87,6 @@ document.getElementById('join-form').addEventListener('submit', (e) => {
 
 // ── Main render ────────────────────────────────────────────────────────────
 function renderAll(s) {
-  if (s.phase !== 'auction_choose') chooseSelectedIndices = [];
   renderHeader(s);
   renderPhasePanel(s);
   renderChipsTab(s);
@@ -224,8 +223,6 @@ document.getElementById('ready-btn').addEventListener('click', () => {
 });
 
 // ── Auction choose ─────────────────────────────────────────────────────────
-let chooseSelectedIndices = [];
-
 function renderChoose(s) {
   const isAuctioner = s.auctioner === myName;
   document.getElementById('choose-own').classList.toggle('hidden', !isAuctioner);
@@ -233,7 +230,6 @@ function renderChoose(s) {
 
   if (!isAuctioner) {
     document.getElementById('choose-waiting-name').textContent = s.auctioner || '…';
-    chooseSelectedIndices = [];
   }
 }
 
@@ -241,78 +237,18 @@ function renderChooseDice() {
   if (!publicState || publicState.phase !== 'auction_choose') return;
   if (publicState.auctioner !== myName) return;
   const el = document.getElementById('choose-dice-row');
-  const confirmBtn = document.getElementById('auction-confirm-btn');
-  if (!el || !confirmBtn) return;
-
-  // Determine which indices should be dulled
-  const dulledIndices = new Set();
-  if (chooseSelectedIndices.length === 1) {
-    const selVal = myDice[chooseSelectedIndices[0]]?.value;
-    myDice.forEach((d, i) => {
-      if (!chooseSelectedIndices.includes(i) && d.value !== selVal) dulledIndices.add(i);
-    });
-  } else if (chooseSelectedIndices.length === 2) {
-    myDice.forEach((d, i) => { if (!chooseSelectedIndices.includes(i)) dulledIndices.add(i); });
-  }
-
-  el.innerHTML = `<div class="dice-row">${myDice.map((d, i) => {
-    const face = d.value ? DICE_EMOJI[d.value] : '?';
-    const isSelected = chooseSelectedIndices.includes(i);
-    const isDulled   = dulledIndices.has(i);
-    const cls = ['die', 'clickable', isSelected ? 'selected' : '', isDulled ? 'dulled' : ''].filter(Boolean).join(' ');
-    return `<div style="text-align:center">
-      <div class="${cls}" onclick="handleChooseDieClick(${i})">${face}</div>
-      <div class="die-label">Die ${i + 1}</div>
-    </div>`;
-  }).join('')}</div>`;
-
-  const isPair = chooseSelectedIndices.length === 2;
-  confirmBtn.classList.remove('hidden');
-  confirmBtn.disabled = chooseSelectedIndices.length === 0;
-  confirmBtn.textContent = isPair ? 'Auction Pair' : 'Auction Die';
-}
-
-window.handleChooseDieClick = (idx) => {
-  if (chooseSelectedIndices.includes(idx)) {
-    // Deselect
-    chooseSelectedIndices = chooseSelectedIndices.filter(i => i !== idx);
-  } else if (chooseSelectedIndices.length === 0) {
-    chooseSelectedIndices = [idx];
-  } else if (chooseSelectedIndices.length === 1) {
-    const selVal = myDice[chooseSelectedIndices[0]]?.value;
-    if (myDice[idx]?.value === selVal && publicState.four_dice_mode) {
-      chooseSelectedIndices = [chooseSelectedIndices[0], idx];  // form pair
-    } else {
-      chooseSelectedIndices = [idx];  // replace selection
-    }
-  } else {
-    chooseSelectedIndices = [idx];  // start over
-  }
-  renderChooseDice();
-};
-
-function confirmAuction() {
-  if (chooseSelectedIndices.length === 0) return;
-  socket.emit('confirm_auction_dice', { indices: [...chooseSelectedIndices] });
-  chooseSelectedIndices = [];
+  if (!el) return;
+  el.innerHTML = diceRowHtml(myDice, true, (idx) => {
+    socket.emit('choose_auction_die', { index: idx });
+  });
 }
 
 // ── Auction live ───────────────────────────────────────────────────────────
 function renderAuctionLive(s) {
   document.getElementById('auction-auctioner').textContent = s.auctioner || '…';
   const dieEl = document.getElementById('auction-die');
-  const dice = s.auctioned_dice && s.auctioned_dice.length > 0 ? s.auctioned_dice : (s.auctioned_die !== null ? [s.auctioned_die] : []);
-  if (dice.length > 1) {
-    dieEl.outerHTML = `<div id="auction-die" style="display:flex;gap:8px">${dice.map(v => `<div class="die revealed">${DICE_EMOJI[v]}</div>`).join('')}</div>`;
-  } else {
-    const singleDie = document.getElementById('auction-die');
-    if (singleDie.tagName === 'DIV' && singleDie.style.display === 'flex') {
-      singleDie.outerHTML = `<div class="die revealed" id="auction-die">${dice.length ? DICE_EMOJI[dice[0]] : '?'}</div>`;
-    } else {
-      singleDie.textContent = dice.length ? DICE_EMOJI[dice[0]] : '?';
-      singleDie.className = 'die' + (dice.length ? ' revealed' : '');
-    }
-  }
+  dieEl.textContent = s.auctioned_die !== null ? DICE_EMOJI[s.auctioned_die] : '?';
+  dieEl.className = 'die' + (s.auctioned_die !== null ? ' revealed' : '');
 
   updateBidStatus(s.current_bid, s.bid_leader);
 
@@ -388,12 +324,8 @@ function renderExchange(s) {
   document.getElementById('exchange-waiting-view').classList.toggle('hidden', isWinner);
 
   if (isWinner) {
-    const dice = s.auctioned_dice && s.auctioned_dice.length > 0 ? s.auctioned_dice : (s.auctioned_die !== null ? [s.auctioned_die] : []);
-    document.getElementById('received-dice-display').innerHTML =
-      dice.map(v => `<span class="die revealed" style="display:inline-flex;width:44px;height:44px;font-size:24px;vertical-align:middle">${DICE_EMOJI[v] || '?'}</span>`).join(' ');
-    const stillNeeded = (s.exchange_picks_needed || 1) - (s.exchange_picks_so_far || 0);
-    document.getElementById('exchange-pick-msg').textContent =
-      stillNeeded > 1 ? `Pick ${stillNeeded} of your dice to give back:` : 'Pick one of your dice to give back:';
+    const dieEl = document.getElementById('received-die');
+    dieEl.textContent = s.auctioned_die !== null ? DICE_EMOJI[s.auctioned_die] : '?';
   } else {
     document.getElementById('exchange-winner-name').textContent = s.exchange_winner || '…';
     document.getElementById('exchange-bid-amount').textContent = s.current_bid;
@@ -479,17 +411,14 @@ function renderHistory(s) {
   list.innerHTML = [...(s.history || [])].reverse().map(h => {
     if (typeof h === 'object') {
       if (h.type === 'exchange') {
-        const winnerGot   = (Array.isArray(h.winner_got)   ? h.winner_got   : [h.winner_got]).map(v => DICE_EMOJI[v]).join(' ');
-        const auctionerGot = (Array.isArray(h.auctioner_got) ? h.auctioner_got : [h.auctioner_got]).map(v => DICE_EMOJI[v]).join(' ');
         const inner =
-          `<span class="hist-player">${esc(h.winner)}</span>: ${winnerGot}<br>` +
-          `<span class="hist-player">${esc(h.auctioner)}</span>: ${auctionerGot}<br>` +
+          `<span class="hist-player">${esc(h.winner)}</span>: ${DICE_EMOJI[h.winner_got]}<br>` +
+          `<span class="hist-player">${esc(h.auctioner)}</span>: ${DICE_EMOJI[h.auctioner_got]}<br>` +
           `<span class="hist-meta">${esc(h.winner)} paid ${h.bid} to ${esc(h.auctioner)}</span>`;
         return `<div class="history-item">R${h.round}·${h.auction} &nbsp;${inner}</div>`;
       }
       if (h.type === 'no_bid') {
-        const diceStr = (Array.isArray(h.dice) ? h.dice : [h.die]).map(v => DICE_EMOJI[v]).join(' ');
-        return `<div class="history-item no-bid">R${h.round}·${h.auction} &nbsp;${esc(h.auctioner)}: ${diceStr} — no bids</div>`;
+        return `<div class="history-item no-bid">R${h.round}·${h.auction} &nbsp;${esc(h.auctioner)}: ${DICE_EMOJI[h.die]} — no bids</div>`;
       }
       if (h.type === 'payout') {
         return `<div class="history-item payout">R${h.round} payout: ${esc(h.summary)}</div>`;
