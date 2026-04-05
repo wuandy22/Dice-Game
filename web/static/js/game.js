@@ -500,7 +500,7 @@ function renderPokerTable(s) {
 
     return `<div class="${seatCls}" style="left:${pos[i].x}%;top:${pos[i].y}%">
       ${diceHtml ? `<div class="table-dice">${diceHtml}</div>` : ''}
-      <div class="${nameCls}">${onlineIndicator}${esc(player.name)}${youMark}&nbsp;&nbsp;<span class="table-chips">${player.chips}🪙</span></div>
+      <div class="${nameCls}">${onlineIndicator}${esc(player.name)}${youMark}&nbsp;&nbsp;<span class="table-chips">${player.chips} chips</span></div>
     </div>`;
   }).join('');
 
