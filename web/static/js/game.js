@@ -48,7 +48,7 @@ socket.on('public_state', (state) => {
 socket.on('private_dice', (data) => {
   if (data.name === myName) {
     myDice = data.dice;
-    renderMyDiceTab();
+    renderPokerTable(publicState);
     renderRollingDice();
     renderChooseDice();
     renderExchangeDice();
@@ -89,10 +89,9 @@ document.getElementById('join-form').addEventListener('submit', (e) => {
 function renderAll(s) {
   renderHeader(s);
   renderPhasePanel(s);
-  renderChipsTab(s);
+  renderPokerTable(s);
   renderHistory(s);
   // Refresh dice sub-renders for phase-aware UI
-  renderMyDiceTab();
   renderRollingDice();
   renderChooseDice();
   renderExchangeDice();
@@ -431,7 +430,84 @@ function renderHistory(s) {
   }).join('');
 }
 
-// ── My dice tab ────────────────────────────────────────────────────────────
+// ── Poker Table ────────────────────────────────────────────────────────────
+const TABLE_POSITIONS = {
+  1: [{x:50, y:82}],
+  2: [{x:50, y:87}, {x:50, y:10}],
+  3: [{x:50, y:87}, {x:16, y:14}, {x:84, y:14}],
+  4: [{x:50, y:87}, {x:5,  y:50}, {x:50, y:10}, {x:95, y:50}],
+  5: [{x:50, y:87}, {x:10, y:68}, {x:17, y:12}, {x:83, y:12}, {x:90, y:68}],
+};
+
+function renderPokerTable(s) {
+  const el = document.getElementById('poker-table-inner');
+  if (!el) return;
+  if (!s || !s.players) return;
+
+  const n = s.players.length;
+  if (n === 0) {
+    el.innerHTML = '<div class="table-empty">Waiting for players to join…</div>';
+    return;
+  }
+
+  // Rotate so "me" is always seat 0 (bottom)
+  const myIdx = s.players.findIndex(p => p.name === myName);
+  const seats = [];
+  for (let i = 0; i < n; i++) seats.push(s.players[(myIdx >= 0 ? myIdx + i : i) % n]);
+
+  const pos = TABLE_POSITIONS[Math.min(n, 5)];
+
+  // Center: auctioned die during auction/exchange phases
+  let centerHtml = '';
+  if (['auction_live', 'exchange'].includes(s.phase) && s.auctioned_die !== null) {
+    centerHtml = `<div class="table-center">
+      <div class="die revealed" style="width:52px;height:52px;font-size:30px">${DICE_EMOJI[s.auctioned_die]}</div>
+      <div class="table-center-label">${esc(s.auctioner)}</div>
+    </div>`;
+  }
+
+  const seatsHtml = seats.map((player, i) => {
+    if (!pos[i]) return '';
+    const isMe       = player.name === myName;
+    const isAuctioner = s.auctioner === player.name;
+
+    // Build dice for this seat
+    let diceHtml = '';
+    if (isMe) {
+      if (myDice.length > 0) {
+        diceHtml = myDice.map(d =>
+          d.value
+            ? `<div class="table-die">${DICE_EMOJI[d.value]}</div>`
+            : `<div class="table-die face-down"></div>`
+        ).join('');
+      }
+    } else {
+      const rev = player.revealed_dice || {};
+      for (let j = 0; j < (player.dice_count || 0); j++) {
+        const val = rev[String(j)];
+        diceHtml += val
+          ? `<div class="table-die">${DICE_EMOJI[val]}</div>`
+          : `<div class="table-die face-down"></div>`;
+      }
+    }
+
+    const nameCls = 'table-name' + (isMe ? ' you-seat' : '');
+    const seatCls = 'table-seat' + (isAuctioner ? ' auctioner' : '');
+    const onlineIndicator = player.connected
+      ? '<span class="online-dot" style="margin-right:4px"></span>'
+      : '<span class="offline-dot" style="margin-right:4px"></span>';
+    const youMark = isMe ? ' <span style="opacity:.55">(you)</span>' : '';
+
+    return `<div class="${seatCls}" style="left:${pos[i].x}%;top:${pos[i].y}%">
+      ${diceHtml ? `<div class="table-dice">${diceHtml}</div>` : ''}
+      <div class="${nameCls}">${onlineIndicator}${esc(player.name)}${youMark}&nbsp;&nbsp;<span class="table-chips">${player.chips}🪙</span></div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `<div class="poker-felt">${centerHtml}</div>${seatsHtml}`;
+}
+
+// ── My dice tab (kept for rolling-phase inline display) ────────────────────
 function renderMyDiceTab() {
   const el = document.getElementById('my-dice-row');
   if (!el) return;

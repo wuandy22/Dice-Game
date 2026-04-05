@@ -193,29 +193,9 @@
       <div class="standings" id="standings"></div>
     </div>
 
-    <!-- ── Tabs (always visible after game starts) ───────────────────────── -->
-    <div class="card" style="padding:14px 20px">
-      <div class="tab-bar">
-        <button class="tab-btn active" data-tab="my-dice">Your Dice</button>
-        <button class="tab-btn" data-tab="chips">All Chips</button>
-      </div>
-
-      <div id="tab-my-dice" class="tab-panel active">
-        <div id="my-dice-row"></div>
-      </div>
-
-      <div id="tab-chips" class="tab-panel">
-        <table class="chips-table">
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Chips</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="chips-tbody"></tbody>
-        </table>
-      </div>
+    <!-- ── Poker Table ───────────────────────────────────────────────────── -->
+    <div class="card" style="padding:0;overflow:visible;position:relative">
+      <div id="poker-table-inner"></div>
     </div>
 
   </main>
