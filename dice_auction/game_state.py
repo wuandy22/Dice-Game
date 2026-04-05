@@ -5,6 +5,7 @@ from .models import Player, Die, Pot
 from .scoring import calculate_shares, distribute_pot
 
 AUCTION_COUNTDOWN = 6.0
+NO_BID_PENALTY    = 5
 
 
 class Phase:
@@ -391,12 +392,16 @@ class GameManager:
                     self._timer_active = False
                     if self.bid_leader is None:
                         self.round_auction_num += 1
+                        penalty = min(NO_BID_PENALTY, self.auctioner.chips)
+                        self.auctioner.pay(penalty)
+                        self.pot.collect(penalty)
                         self.history.append({
                             'type': 'no_bid',
                             'round': self.round_num,
                             'auction': self.round_auction_num,
                             'auctioner': self.auctioner.name,
                             'die': self.auctioned_die.value,
+                            'penalty': penalty,
                         })
                         self.auctioner.take_die(self.auctioned_die)
                         self.auctioned_die = None
